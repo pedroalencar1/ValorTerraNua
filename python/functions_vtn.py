@@ -1,6 +1,11 @@
-from math import trunc, ceil
-import numpy as np
 
+#%%
+from math import trunc, ceil, exp
+import numpy as np
+import sidrapy
+
+
+#%%
 # get id values from dictionaries
 IRRIGATION_ID = {'Não irrigavel':0, 
                  'Irrigavel': 1}
@@ -47,7 +52,8 @@ def price_empty_land(irr_id,
                      exp_id,
                      use_id,
                      area,
-                     distance):
+                     distance, 
+                     ipca):
     
     """
     Calculates the price of empty land
@@ -63,26 +69,26 @@ def price_empty_land(irr_id,
             pel_values: list of values with mean, min and max estimations    
     """
     
-    pel_mean = 10**(COEF_MEAN["constat"] + \
+    pel_mean = exp(COEF_MEAN["constat"] + \
         COEF_MEAN["irrigation"][irr_id] + \
         COEF_MEAN["exploration"][exp_id] + \
         COEF_MEAN["class_use"][use_id] + \
         COEF_MEAN["area"]*area + \
-        COEF_MEAN["distance"]*distance)
+        COEF_MEAN["distance"]*distance)*ipca*area
         
-    pel_min = 10**(COEF_MIN["constat"] + \
+    pel_min = exp(COEF_MIN["constat"] + \
         COEF_MIN["irrigation"][irr_id] + \
         COEF_MIN["exploration"][exp_id] + \
         COEF_MIN["class_use"][use_id] + \
         COEF_MIN["area"]*area + \
-        COEF_MIN["distance"]*distance)
+        COEF_MIN["distance"]*distance)*ipca*area
         
-    pel_max = 10**(COEF_MAX["constat"] + \
+    pel_max = exp(COEF_MAX["constat"] + \
         COEF_MAX["irrigation"][irr_id] + \
         COEF_MAX["exploration"][exp_id] + \
         COEF_MAX["class_use"][use_id] + \
         COEF_MAX["area"]*area + \
-        COEF_MAX["distance"]*distance)
+        COEF_MAX["distance"]*distance)*ipca*area
     
     pel_values = [pel_mean, pel_min, pel_max]
     
@@ -99,3 +105,28 @@ def price_neat(pel_values):
                        "Valor máximo": pel_values[2]}
     
     return pel_values_dict
+
+def get_ipca():
+    "calculate accumulated ipca since 01.2021 until current month "
+    
+    #retrieve data from ibge
+    data = sidrapy.get_table(table_code = '1737',
+                             territorial_level = '1',
+                             ibge_territorial_code = 'all',
+                             variable = '63,69,2263,2264,2265',
+                             period = 'last%20472')
+    
+    #select period 
+    ipca = data[data['D3N'] == 'IPCA - Variação mensal']
+    ipca['D2C'] = [int(numeric_string) for numeric_string in ipca['D2C']]
+    ipca['V'] = [float(numeric_string) for numeric_string in ipca['V']]
+    ipca = ipca[ipca['D2C'] > 202100]
+
+    # ref_month = list(ipca['D2C'])[-1]   
+
+    #compute ipca
+    ipca_list = ipca['V']/100 + 1
+    ipca_val = np.prod(ipca_list)
+    
+    # return([ref_month, ipca_val])
+    return(ipca_val)

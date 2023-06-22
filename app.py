@@ -15,10 +15,14 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
+import sidrapy # library to get updated ipca
 
 import python.functions_vtn as vtn
 
 st.set_page_config(layout="wide")
+
+# get ipca value
+# ipca_values = vtn.get_ipca()
 
 #%% app
 coltitle, colempty1, colfig1 = st.columns([3,2,1])
@@ -64,22 +68,37 @@ with col1:
                              "Alta Prod.","Terras Arenosas", "Aluvião"),
                             help = "Dúvida sobre qual a classe de uso da propriedade? Confira no fim da página as características de cada categoria")
     
+    calc_ipca = st.radio("Valor do IPCA:", 
+                         ('Estimativa', 'Consulta'),
+                         help = "Para mais informações consulte: https://www.ibge.gov.br/explica/inflacao.php. <br>A opção 'Consulta' obtain dados diretos do IBGE e pode demorar alguns segundos para carregar.")
+    
+    if calc_ipca == 'Estimativa':
+        val_ipca = st.number_input(label = "Valor do IPCA", 
+                              min_value=0.,
+                              max_value= 1000., 
+                              value = 1.,
+                              key = "val_ipca",
+                              step=0.01,format="%.3f")
+    else:
+        val_ipca = vtn.get_ipca()
+        st.write(f"Valor do IPCA acumulado: {val_ipca:,.3f}")
+        
+    
 # calculate price    
 irr_id = vtn.IRRIGATION_ID[irrigation]
 exp_id = vtn.EXPLORATION_ID[exploration]
 use_id = vtn.CLASS_USE_ID[class_of_use]
 
-est_price = vtn.price_empty_land(irr_id, exp_id, use_id, area, distance)
+est_price = vtn.price_empty_land(irr_id, exp_id, use_id, area, distance, val_ipca)
 round_price = vtn.price_neat(est_price)
-
 
 
 with col2:
     # st.subheader("Propriedades do sedimento")
-    st.write('<p style="font-size:24px"><b>Preço da Terra Nua:</b></p>',
+    st.write('<p style="font-size:24px"><b>Valor da Terra Nua:</b></p>',
                      unsafe_allow_html=True)
-    st.write(f"* Valor da Terra Nua por hectare, a partir de dados de pesquisa de mercado de 2020 e \
-        atualizado por meio do IPCA, para uma área de <b>{area:,.1f} hectares</b>, <b>{irrigation}</b>, \
+    st.write(f"* Valor da Terra Nua, a partir de dados de pesquisa de mercado de 2020 e \
+        atualizado por meio do IPCA ao corrente mês, para uma área de <b>{area:,.1f} hectares</b>, <b>{irrigation}</b>, \
             e distante <b>{distance:,.1f}  quilômetros </b> da cidade.",
              unsafe_allow_html=True)
     
@@ -88,9 +107,9 @@ with col2:
     st.write(f"* Tipo de propriedade: <b>{class_of_use}</b>",
              unsafe_allow_html=True)
     st.write(" ")
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Preço Médio: <b>R$ {round_price['Valor médio']:,.2f} </b></p>", unsafe_allow_html=True)
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Preço Mínimo: <b>R$ {round_price['Valor mínimo']:,.2f} </b></p>", unsafe_allow_html=True)
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Preço Máximo: <b>R$ {round_price['Valor máximo']:,.2f} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Médio: <b>R$ {round_price['Valor médio']:,.2f} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Mínimo: <b>R$ {round_price['Valor mínimo']:,.2f} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Máximo: <b>R$ {round_price['Valor máximo']:,.2f} </b></p>", unsafe_allow_html=True)
 
     st.write(" ")
     st.write(" ")
@@ -117,7 +136,11 @@ with col2:
     
 #%% additional information
 st.markdown("""---""")  
-st.write("ADD HELP FOR TYPOLOGY")
+st.subheader("Sobre as tipologias de uso do solo")
+st.write("Na tabela abaixo apresentamos as características e solos predominantes de cada tipologia")
+col20, col21, col22 = st.columns([1,6,1])
+with col21: 
+    st.image("figs/Tipologias.png", use_column_width = True)
 
 st.markdown("""---""")
 st.subheader("Sobre o app")
@@ -133,3 +156,17 @@ st.write("[Prof. Dr. Carlos Alexandre Costa](http://lattes.cnpq.br/9346087418658
 col71, col72, col73 = st.columns([1,2,1])
 with col72:  
     st.image("figs/logos.png", use_column_width = True)
+
+
+#%% notes on getting the IPCA
+
+# Check page: https://analisemacro.com.br/economia/indicadores/analise-de-dados-de-inflacao-no-python/
+#             https://www.idinheiro.com.br/tabelas/tabela-ipca/
+
+# raw_ipca = sidrapy.get_table(table_code = '1737',
+#                              territorial_level = '1',
+#                              ibge_territorial_code = 'all',
+#                              variable = '63,69,2263,2264,2265',
+#                              period = 'last%20472')
+
+# ipca = data[data['D3N'] == 'IPCA - Variação mensal']

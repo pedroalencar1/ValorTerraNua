@@ -1,6 +1,7 @@
 
 #%% import functions
 import functions_resed as rsd
+import numpy as np
 # %%
 demand_crop = rsd.demand_from_crop(6, 0.24, 1.67, "Sorgo forrageiro",20)
 demand_crop
@@ -79,4 +80,27 @@ prices_list = rsd.bag_price_as_list(100, 100, 197)
 
 cost = rsd.cost_supplements(bags, prices_list)
 cost
+# %%
+import sidrapy
+
+#%%
+
+# Importa as variações do IPCA
+data = sidrapy.get_table(table_code = '1737',
+                             territorial_level = '1',
+                             ibge_territorial_code = 'all',
+                             variable = '63,69,2263,2264,2265',
+                             period = 'last%20472')
+
+# %%
+ipca = data[data['D3N'] == 'IPCA - Variação mensal']
+ipca['D2C'] = [int(numeric_string) for numeric_string in ipca['D2C']]
+ipca['V'] = [float(numeric_string) for numeric_string in ipca['V']]
+ipca = ipca[ipca['D2C'] > 202100]
+
+ref_month = list(ipca['D2C'])[-1]
+
+ipca_list = ipca['V']/100 + 1
+ipca_val = np.prod(ipca_list)
+ipca_val
 # %%
