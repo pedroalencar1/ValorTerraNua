@@ -23,6 +23,12 @@ st.set_page_config(layout="wide")
 
 # get ipca value
 # ipca_values = vtn.get_ipca()
+# @st.cache
+# def run_ipca():
+#     # This function will only be run the first time it's called
+#     vtn.get_ipca()
+
+# ipca_val_test = run_ipca()
 
 #%% app
 coltitle, colempty1, colfig1 = st.columns([3,2,1])
@@ -70,7 +76,7 @@ with col1:
     
     calc_ipca = st.radio("Valor do IPCA:", 
                          ('Estimativa', 'Consulta'),
-                         help = "Para mais informações consulte: https://www.ibge.gov.br/explica/inflacao.php. <br>A opção 'Consulta' obtain dados diretos do IBGE e pode demorar alguns segundos para carregar.")
+                         help = "Para mais informações consulte: https://www.ibge.gov.br/explica/inflacao.php. A opção 'Consulta' obtain dados diretos do IBGE e pode demorar alguns segundos para carregar.")
     
     if calc_ipca == 'Estimativa':
         val_ipca = st.number_input(label = "Valor do IPCA", 
@@ -80,7 +86,13 @@ with col1:
                               key = "val_ipca",
                               step=0.01,format="%.3f")
     else:
-        val_ipca = vtn.get_ipca()
+        # val_ipca = vtn.get_ipca()
+        @st.cache
+        def run_ipca():
+            # This function will only be run the first time it's called
+            val = vtn.get_ipca()
+            return(val)
+        val_ipca = run_ipca()
         st.write(f"Valor do IPCA acumulado: {val_ipca:,.3f}")
         
     
