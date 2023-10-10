@@ -34,7 +34,8 @@ st.set_page_config(layout="wide")
 coltitle, colempty1, colfig1 = st.columns([3,2,1])
 with coltitle:
     st.title("Valor da Terra Nua")
-    st.subheader("Assistente de precificação de propriedades rurais")
+    st.subheader("Assistente de precificação de propriedades rurais",
+                 help = 'Insira nos campos abaixo as informações de: tamanho da propriedade em hectares; distância (km) para o centro urbano do município; se é irrigada ou não; qual o tipo de exploração atual na propriedade; qual a tipologia de uso (definições no quadro ao final da página); o valor do IPCA ou consulte-o')
     st.write("  ")
     st.write("  ")
 
@@ -76,7 +77,7 @@ with col1:
     
     calc_ipca = st.radio("Valor do IPCA:", 
                          ('Estimativa', 'Consulta'),
-                         help = "Para mais informações consulte: https://www.ibge.gov.br/explica/inflacao.php. A opção 'Consulta' obtain dados diretos do IBGE e pode demorar alguns segundos para carregar.")
+                         help = "Para mais informações consulte: https://www.ibge.gov.br/explica/inflacao.php. A opção 'Consulta' obtém dados diretos do IBGE e pode demorar alguns segundos para carregar.")
     
     if calc_ipca == 'Estimativa':
         val_ipca = st.number_input(label = "Valor do IPCA", 
@@ -84,10 +85,11 @@ with col1:
                               max_value= 1000., 
                               value = 1.,
                               key = "val_ipca",
-                              step=0.01,format="%.3f")
+                              step=0.01,format="%.3f",
+                              help = "Os dados para geração do resultado do valor da propriedade estão todos atualizados para outubro de 2020. Portanto, a necessidade de correção desse valor para a data em que a pesquisa está sendo realizada.")
     else:
         # val_ipca = vtn.get_ipca()
-        @st.cache
+        @st.cache_data
         def run_ipca():
             # This function will only be run the first time it's called
             val = vtn.get_ipca()
@@ -119,32 +121,39 @@ with col2:
     st.write(f"* Tipo de propriedade: <b>{class_of_use}</b>",
              unsafe_allow_html=True)
     st.write(" ")
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Médio: <b>R$ {round_price['Valor médio']:,.2f} </b></p>", unsafe_allow_html=True)
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Mínimo: <b>R$ {round_price['Valor mínimo']:,.2f} </b></p>", unsafe_allow_html=True)
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Máximo: <b>R$ {round_price['Valor máximo']:,.2f} </b></p>", unsafe_allow_html=True)
-
-    st.write(" ")
-    st.write(" ")
-    st.write("ADD TEXTO SOBRE COMO USAR O APP (APENAS ESTIMATIVA)")
-    st.write("TEXTO SOBRE REAJUSTE DE PRECOS PELO IPCA")
-
-    # st.write(f"{irr_id}, {exp_id}, {use_id}")    
-    # st.write(f'{vtn.COEF_MEAN["irrigation"][irr_id]} , {vtn.COEF_MEAN["exploration"][exp_id]}, {vtn.COEF_MEAN["class_use"][use_id]}')
-    
-    # df_pel = pd.DataFrame.from_dict(round_price, orient='index')
-    # st.table(df_pel)
-
-    st.write(" ")
-    st.write(" ")
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Médio: <b>R$ {round_price['Valor médio']:,.0f} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Mínimo: <b>R$ {round_price['Valor mínimo']:,.0f} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Máximo: <b>R$ {round_price['Valor máximo']:,.0f} </b></p>", unsafe_allow_html=True)
+    # st.write(" ")
     st.markdown("""---""")   
-    st.write("""<p style='color:#808080;'><i><u>Dica: Salve esta página como um relatório em pdf</u><br>
-            &nbsp;&nbsp;&nbsp;&nbsp; 1) Clique com o botão direito do mouse em qualquer ponto da tela e escolha 'imprimir'.<br>
-            &nbsp;&nbsp;&nbsp;&nbsp; 2) Escolha _layout_ paisagem para uma melhor visualização. <br>
-            &nbsp;&nbsp;&nbsp;&nbsp; 3) Pressione salvar. <br>
-            &nbsp;&nbsp;&nbsp;&nbsp; 4) Pronto. O arquivo será salvo automaticamente na sua pasta de downloads.
-            </i></p>
-            """,
-            unsafe_allow_html=True)
+    
+    st.write("Clique no botão abaixo para baixar os resultados da análise")
+   
+    
+    df_export = vtn.export_dataframe(irr_id,
+                                 exp_id,
+                                 use_id,
+                                 area,
+                                 distance, 
+                                 val_ipca,                      
+                                 round_price)
+
+    csv = vtn.convert_df(df_export)    
+    
+    st.download_button("Baixar", 
+                       data = csv, 
+                       file_name="Valor_terra_nua.csv")    
+    st.write(" ")
+    st.write(" ")
+    # st.markdown("""---""")   
+    # st.write("""<p style='color:#808080;'><i><u>Dica: Salve esta página como um relatório em pdf</u><br>
+    #         &nbsp;&nbsp;&nbsp;&nbsp; 1) Clique com o botão direito do mouse em qualquer ponto da tela e escolha 'imprimir'.<br>
+    #         &nbsp;&nbsp;&nbsp;&nbsp; 2) Escolha _layout_ paisagem para uma melhor visualização. <br>
+    #         &nbsp;&nbsp;&nbsp;&nbsp; 3) Pressione salvar. <br>
+    #         &nbsp;&nbsp;&nbsp;&nbsp; 4) Pronto. O arquivo será salvo automaticamente na sua pasta de downloads.
+    #         </i></p>
+    #         """,
+    #         unsafe_allow_html=True)
     
 #%% additional information
 st.markdown("""---""")  
@@ -157,13 +166,13 @@ with col21:
 st.markdown("""---""")
 st.subheader("Sobre o app")
 
-st.write("O projeto Valor da Terra Nua XXXXXXXXXXXXXXXXXXXXX PASSAR TEXTO PARA ENTRAR AQUI, SOBRE O PROJETO...")
+st.write("Aplicativo desenvolvido decorrente de trabalho de tese de doutorado de Otacílio de Assis Jr. pelo Programa de Pós-graduação em Engenharia Agrícola da Universidade Federal do Ceará, no âmbito do projeto Cientista Chefe em parceria com o Governo do Estado do Ceará, e tem como objetivo auxiliar os diferentes agentes de mercado (Corretores, Compradores, Vendedores, Prefeituras, Estado do Ceará) a estimar valores de terra nua em propriedades rurais no Estado do Ceará – Brasil.")
 st.write("**Equipe:**")
-st.write("[MSc. Otacilio de Assis junior](http://lattes.cnpq.br/1270752252633393) (pesquisadora)")
+st.write("[MSc. Otacilio de Assis junior](http://lattes.cnpq.br/1270752252633393) (pesquisador)")
 st.write("[Dr. Pedro Alencar](https://www.tu.berlin/oekohydro/team/pedro-alencar/) (desenvolvedor)")
-st.write("[Prof. Dr. Pedro Medeiros](http://lattes.cnpq.br/4970091740105771) (coordenador)")
-st.write("[Prof. Dr. Carlos Alexandre Costa](http://lattes.cnpq.br/9346087418658759) (coordenador)")
-
+st.write("[Prof. Dr. Pedro H. A. Medeiros](http://lattes.cnpq.br/4970091740105771) (coordenador)")
+st.write("[Prof. Dr. Carlos A. G. Costa](http://lattes.cnpq.br/9346087418658759) (coordenador)")
+st.write("[Profa. Dra. Patrícia V. P. S. Lima](http://lattes.cnpq.br/7172491133426747) (coordenadora)")
 
 col71, col72, col73 = st.columns([1,2,1])
 with col72:  

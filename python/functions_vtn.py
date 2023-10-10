@@ -1,6 +1,7 @@
 
 #%%
 from math import trunc, ceil, exp
+import pandas as pd
 import numpy as np
 import sidrapy
 
@@ -74,27 +75,48 @@ def price_empty_land(irr_id,
         COEF_MEAN["exploration"][exp_id] + \
         COEF_MEAN["class_use"][use_id] + \
         COEF_MEAN["area"]*area + \
-        COEF_MEAN["distance"]*distance)*ipca*area
+        COEF_MEAN["distance"]*distance)*ipca
         
     pel_min = exp(COEF_MIN["constat"] + \
         COEF_MIN["irrigation"][irr_id] + \
         COEF_MIN["exploration"][exp_id] + \
         COEF_MIN["class_use"][use_id] + \
         COEF_MIN["area"]*area + \
-        COEF_MIN["distance"]*distance)*ipca*area
+        COEF_MIN["distance"]*distance)*ipca
         
     pel_max = exp(COEF_MAX["constat"] + \
         COEF_MAX["irrigation"][irr_id] + \
         COEF_MAX["exploration"][exp_id] + \
         COEF_MAX["class_use"][use_id] + \
         COEF_MAX["area"]*area + \
-        COEF_MAX["distance"]*distance)*ipca*area
+        COEF_MAX["distance"]*distance)*ipca
     
     pel_values = [pel_mean, pel_min, pel_max]
     
     return pel_values
-        
+
 def price_neat(pel_values):
+    "round prices for display"
+    
+    pel_values = np.array(pel_values)
+    
+    pel_round = np.log10(pel_values)
+    pel_round = np.ceil(pel_round) - 2
+    pel_round[pel_round < 0] = 0
+    pel_round = 10**pel_round
+    
+    pel_values = pel_values/pel_round
+    pel_values = np.round(pel_values)
+    pel_values = pel_values*pel_round
+    
+    pel_values_dict = {"Valor médio": pel_values[0],
+                       "Valor mínimo": pel_values[1],
+                       "Valor máximo": pel_values[2]}
+    
+    return pel_values_dict   
+    
+  
+def price_neat_old(pel_values):
     "round price to thousands"
     
     pel_values = np.array(pel_values)/1000
@@ -130,3 +152,43 @@ def get_ipca():
     
     # return([ref_month, ipca_val])
     return(ipca_val)
+
+def export_dataframe(irr_id, 
+                     exp_id,
+                     use_id,
+                     area,
+                     distance, 
+                     ipca, 
+                     pel_values):
+    
+    irr_key = [k for k, v in IRRIGATION_ID.items() if v == irr_id]
+    exp_key = [k for k, v in EXPLORATION_ID.items() if v == exp_id]
+    use_key = [k for k, v in CLASS_USE_ID.items() if v == use_id]
+
+    arr = [irr_key[0],
+        exp_key[0],
+        use_key[0],
+        area,
+        distance, 
+        round(ipca, 3), 
+        pel_values["Valor médio"],
+        pel_values["Valor mínimo"],
+        pel_values["Valor máximo"]]
+
+    arr_id = ["Irrigabilidade",
+            "Tipo de exploração",
+            "Classe de uso",
+            "Área (hectares)",
+            "Distância até a cidade (km)", 
+            "Valor do IPCA",
+            "Valor médio (R$/ha)",
+            "Valor mínimo (R$/ha)",
+            "Valor máximo (R$/ha)"]
+
+    df = pd.DataFrame(arr, index = arr_id, columns = ["Valor"])
+    
+    return(df)
+
+def convert_df(df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    return df.to_csv().encode('utf-8')
