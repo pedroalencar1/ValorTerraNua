@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 import sidrapy
 
-
 #%%
 # get id values from dictionaries
 IRRIGATION_ID = {'Não irrigavel':0, 
@@ -13,7 +12,7 @@ IRRIGATION_ID = {'Não irrigavel':0,
 EXPLORATION_ID = {'Agricultura':0,
                   'Mista':1, 
                   "Sem exploração":2}
-CLASS_USE_ID = {'Uso retrito': 0,
+CLASS_USE_ID = {'Uso restrito': 0,
                 "Baixa Prod.": 1, 
                 "Média Prod.": 2, 
                 "Alta Prod.": 3,  
@@ -65,6 +64,7 @@ def price_empty_land(irr_id,
             class_id (int):  0, 1, 2, 3, 4, or 5
             area (float): property area in hectares
             distance (float): distance of property to city center in kilometers
+            ipca (float): interest readjustment provided  by IBGE (Brazil)
             
         Returns:
             pel_values: list of values with mean, min and max estimations    
@@ -114,6 +114,37 @@ def price_neat(pel_values):
                        "Valor máximo": pel_values[2]}
     
     return pel_values_dict   
+
+
+def price_neat_text(pel_neat):
+    "get prices with comma as decimal separator"
+    
+    pel_str = [str(pel_neat["Valor médio"])[:-2],
+               str(pel_neat["Valor mínimo"])[:-2],
+               str(pel_neat["Valor máximo"])[:-2]]
+
+
+    for i in range(3):
+        if (len(pel_str[i]) > 6):
+            aux1 = pel_str[i][:-6]
+            aux2 = pel_str[i][-6:-3]
+            aux3 = pel_str[i][-3:]
+            
+            pel_str[i] = aux1+'.'+aux2+'.'+aux3+",00"
+            
+        elif (len(pel_str[i]) > 3):
+            aux1 = pel_str[i][:-3]
+            aux2 = pel_str[i][-3:]
+            
+            pel_str[i] = aux1+'.'+aux2+",00"
+        else:
+            pel_str[i] = pel_str[i]+",00"
+            
+    pel_values_dict = {"Valor médio": pel_str[0],
+                       "Valor mínimo": pel_str[1],
+                       "Valor máximo": pel_str[2]}
+            
+    return(pel_values_dict)
     
   
 def price_neat_old(pel_values):
@@ -191,4 +222,4 @@ def export_dataframe(irr_id,
 
 def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    return df.to_csv().encode('utf-8')
+    return df.to_csv().encode('utf-16')

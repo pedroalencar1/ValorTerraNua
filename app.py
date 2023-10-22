@@ -71,7 +71,7 @@ with col1:
                           ('Sem exploração', 'Mista', "Agricultura"))
     
     class_of_use = st.radio("Classe de uso:",
-                            ('Uso retrito',"Baixa Prod.", "Média Prod.", 
+                            ('Uso restrito',"Baixa Prod.", "Média Prod.", 
                              "Alta Prod.","Terras Arenosas", "Aluvião"),
                             help = "Dúvida sobre qual a classe de uso da propriedade? Confira no fim da página as características de cada categoria")
     
@@ -105,7 +105,7 @@ use_id = vtn.CLASS_USE_ID[class_of_use]
 
 est_price = vtn.price_empty_land(irr_id, exp_id, use_id, area, distance, val_ipca)
 round_price = vtn.price_neat(est_price)
-
+text_price = vtn.price_neat_text(round_price)
 
 with col2:
     # st.subheader("Propriedades do sedimento")
@@ -121,9 +121,13 @@ with col2:
     st.write(f"* Tipo de propriedade: <b>{class_of_use}</b>",
              unsafe_allow_html=True)
     st.write(" ")
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Médio: <b>R$ {round_price['Valor médio']:,.0f} </b></p>", unsafe_allow_html=True)
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Mínimo: <b>R$ {round_price['Valor mínimo']:,.0f} </b></p>", unsafe_allow_html=True)
-    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Máximo: <b>R$ {round_price['Valor máximo']:,.0f} </b></p>", unsafe_allow_html=True)
+    # st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Médio: <b>R$ {round_price['Valor médio']:,.0f} </b></p>", unsafe_allow_html=True)
+    # st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Mínimo: <b>R$ {round_price['Valor mínimo']:,.0f} </b></p>", unsafe_allow_html=True)
+    # st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Máximo: <b>R$ {round_price['Valor máximo']:,.0f} </b></p>", unsafe_allow_html=True)
+
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Médio: <b>R$ {text_price['Valor médio']} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Mínimo: <b>R$ {text_price['Valor mínimo']} </b></p>", unsafe_allow_html=True)
+    st.write(f"<p style='font-size:20px'>&emsp;&emsp;&emsp;&emsp;Valor Máximo: <b>R$ {text_price['Valor máximo']} </b></p>", unsafe_allow_html=True)
     # st.write(" ")
     st.markdown("""---""")   
     

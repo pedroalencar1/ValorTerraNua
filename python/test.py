@@ -1,90 +1,9 @@
 
 #%% import functions
-import functions_resed as rsd
+# import functions_resed as rsd
 import numpy as np
-# %%
-demand_crop = rsd.demand_from_crop(6, 0.24, 1.67, "Sorgo forrageiro",20)
-demand_crop
-
-#%% 
-npk_soil_gkg = rsd.npk_to_gkg(0.51, 6, 0.24)
-npk_soil_kgm3 = rsd.npk_to_kgm3(npk_soil_gkg, 1.67)
-npk_soil_kgm3
-# individual_bal = rsd.sediment_balance_individual(demand_crop, npk_sed)
-# individual_bal
-
-# %%
-
-npk_sed_gkg = rsd.npk_to_gkg(3.56, 210, 0.55)
-npk_sed_kgm3 = rsd.npk_to_kgm3(npk_sed_gkg, 1.17)
-npk_sed_kgm3
-# individual_bal = rsd.sediment_balance_individual(demand_crop, npk_sed)
-# individual_bal
-#%%
-depth = 20
-sup = "Fósforo"
-# %%
-depth_sed = rsd.get_mix(demand_crop, npk_soil_kgm3, npk_sed_kgm3, depth, sup)
-depth_sed
-# %%
-deficit_new = rsd.persistent_deficit(depth_sed, demand_crop, npk_soil_kgm3, npk_sed_kgm3, depth)
-deficit_new
-# %%    
-add_sup = rsd.additional_supplements(deficit_new, depth, 1, 1, 1)
-add_sup
-# %%    
-vols = rsd.soil_movement(depth_sed)
-vols
 
 #%%
-
-
-
-#%%
-nutrients = ("Nitrogênio", "Fósforo", "Potássio")
-expantion_factor = 1.25
-    
-id_sup = nutrients.index(supplement)
-#%%
-    
-demand = np.array(list(demand_crop.values()))
-soil_supply = np.array(list(npk_soil_kgm3.values()))
-sed_supply = np.array(list(npk_sed_kgm3.values()))
-
-sed_supply_exp = sed_supply/expantion_factor
-    
-d_sed = depth*demand[id_sup]/(sed_supply_exp[id_sup] - soil_supply[id_sup])
-d_sed
-
-
-#%%
-
-supply_new = (d_sed*sed_supply_exp + (depth - d_sed)*soil_supply)/depth
-# supply_new
-deficit_new = demand + soil_supply - supply_new
-# deficit_new
-deficit_new[deficit_new<0.001] = 0
-deficit_new
-
-#%%
-comb_bal = rsd.sediment_balance_combined(npk_balance = individual_bal, 
-                                         npk_demand = demand_crop, 
-                                         npk_sed = npk_sed)
-
-comb_bal
-# %%
-bags = rsd.bags_supplement(comb_bal)
-bags
-# %%
-prices_list = rsd.bag_price_as_list(100, 100, 197)
-
-cost = rsd.cost_supplements(bags, prices_list)
-cost
-# %%
-import sidrapy
-
-#%%
-
 # Importa as variações do IPCA
 data = sidrapy.get_table(table_code = '1737',
                              territorial_level = '1',
@@ -104,3 +23,33 @@ ipca_list = ipca['V']/100 + 1
 ipca_val = np.prod(ipca_list)
 ipca_val
 # %%
+import functions_vtn as vtn
+# %%
+price_empty = vtn.price_empty_land(1,1,1,1000,1, 1.2)
+price_neat = vtn.price_neat(price_empty)
+# %%
+
+def price_neat_text(pel_neat):
+    
+    pel_str = [str(pel_neat)[:-2],
+               str(pel_neat[1])[:-2],
+               str(pel_neat[2])[:-2]]
+
+
+    for i in range(3):
+        if (len(pel_str[i]) > 6):
+            aux1 = pel_str[i][:-6]
+            aux2 = pel_str[i][-6:-3]
+            aux3 = pel_str[i][-3:]
+            
+            pel_str[i] = aux1+'.'+aux2+'.'+aux3+",00"
+            
+        elif (len(pel_str[i]) > 3):
+            aux1 = pel_str[i][:-3]
+            aux2 = pel_str[i][-3:]
+            
+            pel_str[i] = aux1+'.'+aux2+",00"
+        else:
+            pel_str[i] = pel_str[i]+",00"
+            
+    return(pel_str)
