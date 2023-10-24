@@ -117,7 +117,7 @@ def price_neat(pel_values):
 
 
 def price_neat_text(pel_neat):
-    "get prices with comma as decimal separator"
+    "get prices with comma as decimal separator "
     
     pel_str = [str(pel_neat["Valor médio"])[:-2],
                str(pel_neat["Valor mínimo"])[:-2],
